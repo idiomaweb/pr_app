@@ -7,11 +7,12 @@
 Configure in .env file or System Enviroment Variables
 
 ### Required vars
-DIRSFTP
-SFTPHOST
-SFTPPORT
-SFTPUSERNAME
-SFTPPASSWORD
+DIRSFTP  
+DESTFILE  
+SFTPHOST  
+SFTPPORT  
+SFTPUSERNAME  
+SFTPPASSWORD  
 
 ## Route to Download File
 Domainname/downloadfiles/:filename
