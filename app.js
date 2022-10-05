@@ -21,19 +21,18 @@ filenames.forEach((file) => {
 });
 
 // Async/Await:
-async function copyFiles() {
+async function copyFiles(srcpath, destpath) {
   try {
     await fs.copy(srcpath, destpath);
     console.log("\nArchivos copiados!");
   } catch (err) {
     console.error(err);
   }
+  console.log("\nOrigen: " + srcpath);
+  console.log("Destino: " + destpath);
 }
 
 SFTP.connect(folderDownload);
-
-console.log("\nOrigen: " + srcpath);
-// console.log("Destino: " + destpath);
 
 // copyFiles();
 
@@ -42,13 +41,24 @@ app.listen(5000, () => {
   console.log("\nServer runing on port", 5000);
 });
 
-// download files from sftp and send to client
-app.get("/downloadfiles/:namefile", (req, res) => {
-  SFTP.downloadSFTPFile("Archivo de texto.txt").then(() => {
+app.get("/downloadfiles", (req, res) => {
+  SFTP.downloadSFTPFile().then(async (listFiles) => {
     console.log("File Served To Client");
-    res.download(`${__dirname}/${folderDownload}/${req.params.namefile}`);
+    // create dir if not exist
+    !fs.existsSync(process.env.DESTFILE) && fs.mkdirSync(process.env.DESTFILE);
+   await copyFiles(srcpath, process.env.DESTFILE);
+   res.send(200)
+
   });
 });
+
+// download files from sftp and send to client
+// app.get("/downloadfiles/:namefile", (req, res) => {
+//   SFTP.downloadSFTPFile(req.params.namefile).then((res) => {
+//     console.log("File Served To Client");    
+//     res.download(`${__dirname}/${folderDownload}/${req.params.namefile}`);
+//   });
+// });
 
 // serve the homepage
 app.get("/", (req, res) => {
