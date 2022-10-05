@@ -9,13 +9,13 @@ const optionSFTP = {
 const SFTPdir = process.env.DIRSFTP;
 class SFTPClient {
   remoteDir = ".";
-  folderToDownloadFiles=""
+  folderToDownloadFiles = "";
   constructor() {
     this.client = new ClientSFTP();
   }
 
   async connect(folderToDownloadFiles) {
-    this.folderToDownloadFiles=folderToDownloadFiles;
+    this.folderToDownloadFiles = folderToDownloadFiles;
     console.log(`Connecting to ${optionSFTP.host}:${optionSFTP.port}`);
     try {
       const res = await this.client.connect(optionSFTP);
@@ -50,20 +50,64 @@ class SFTPClient {
     }
     return fileNames;
   }
+
+  async downloadMultipleFiles() {
+    let fileObjects;
+    try {
+      fileObjects = await this.client.list(this.remoteDir);
+    } catch (err) {
+      console.log("Listing failed:", err);
+    }
+    const listFiles = [];
+    return new Promise(async (resolve) => {
+      for await (const file of fileObjects) {
+        const urlFile = this.remoteDir + "/" + file.name;
+        try {
+          this.client.get(
+            urlFile,
+            path.join(
+              __dirname,
+              "/../",
+              this.folderToDownloadFiles + "/" + file.name
+            )
+          );
+          listFiles.push(file.name);
+          console.log(`File ${file.name} downloaded in server`);
+        } catch (err) {
+          console.error("Downloading failed:", err);
+        }
+      }
+      resolve(listFiles);
+    });
+  }
+
   /**
-   * @param {string} nameFile 
-   * @returns 
+   * @param {string} nameFile
+   * @returns {Promise<string[]>}
    */
   downloadSFTPFile(nameFile) {
-    const urlFile = this.remoteDir+'/'+ nameFile;
+    const urlFile = this.remoteDir + "/" + nameFile;
     return new Promise(async (resolve) => {
       console.log(`Downloading ${urlFile}  ...`);
-      try {
-        await this.client.get(urlFile,path.join(__dirname ,'/../',this.folderToDownloadFiles+'/'+nameFile));
-        console.log('File downloaded in server');
-        resolve()
-      } catch (err) {
-        console.error("Downloading failed:", err);
+      if (nameFile) {
+        try {
+          await this.client.get(
+            urlFile,
+            path.join(
+              __dirname,
+              "/../",
+              this.folderToDownloadFiles + "/" + nameFile
+            )
+          );
+          console.log("File downloaded in server");
+          resolve();
+        } catch (err) {
+          console.error("Downloading failed:", err);
+        }
+      } else {
+        this.downloadMultipleFiles().then((listFiles) => {
+          resolve(listFiles);
+        });
       }
     });
   }
